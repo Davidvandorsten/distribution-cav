@@ -33,8 +33,6 @@ dist_hor_button.onClick = function () {
 
         for(let i = 1; i < layers.length - 1; i++) {
 
-            console.log(JSON.stringify(layers[i]))
-
             previous_widths += layers[i - 1].bbox.width;
             var gaps_width = i * gap_width;
             var new_left_x = layers[0].bbox.left + previous_widths + gaps_width;
