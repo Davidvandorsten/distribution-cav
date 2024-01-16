@@ -1,9 +1,17 @@
 ui.setTitle("Distribution");
 
-// Create buttons
+// Create labels buttons
+var spacing_label = new ui.Label("Distribute Spacing");
 var dist_hor_button = new ui.Button("Horizontal Distribution");
 var dist_ver_button = new ui.Button("Vertical Distribution");
 var print_button = new ui.Button("Log Position Info");
+
+var sort_hLayout = new ui.HLayout();
+var sort_label = new ui.Label("Sort by other axis");
+var sort_checkbox = new ui.Checkbox(true);
+sort_hLayout.add(sort_label);
+sort_hLayout.addStretch();
+sort_hLayout.add(sort_checkbox);
 
 // Button onClick callback functions
 dist_hor_button.onClick = function () {
@@ -23,7 +31,13 @@ dist_hor_button.onClick = function () {
             })
         }
 
-        layers.sort((a, b) => a.bbox.centre.x - b.bbox.centre.x);
+        //If the "Sort by other axis" checkbox is checked, the x pos values will be adjusted top to bottom
+        //If it is not checked, the x pos values will be adjusted left to right
+        if (sort_checkbox.getValue()){
+            layers.sort((a, b) => a.bbox.centre.y - b.bbox.centre.y);
+        } else {
+            layers.sort((a, b) => b.bbox.centre.x - a.bbox.centre.x);
+        }
 
         var total_width = layers[layers.length - 1].bbox.right - layers[0].bbox.left;
         var total_layer_width = layers.reduce((sum, obj) => sum + obj.bbox.width, 0);
@@ -37,7 +51,7 @@ dist_hor_button.onClick = function () {
             var new_left_x = layers[0].bbox.left + previous_widths + gaps_width;
             
             //The difference between the centre x of the bbox and the x position
-            //This incorporates the pivot value
+            //This incorporates the pivot
             var bboxCentre_xPos_adjustment = layers[i].bbox.centre.x - layers[i].position.x;
             
             //The new x position in world space
@@ -69,7 +83,14 @@ dist_ver_button.onClick = function () {
                 pivot: api.get(layer, "pivot")
             })
         }
-        layers.sort((a, b) => b.bbox.centre.y - a.bbox.centre.y);
+
+        //If the "Sort by other axis" checkbox is checked, the y pos values will be adjusted left to right
+        //If it is not checked, the y pos values will be adjusted top to bottom
+        if (sort_checkbox.getValue()){
+            layers.sort((a, b) => a.bbox.centre.x - b.bbox.centre.x);
+        } else {
+            layers.sort((a, b) => b.bbox.centre.y - a.bbox.centre.y);
+        }
 
         var total_height = layers[0].bbox.top - layers[layers.length - 1].bbox.bottom;
         var total_layer_height = layers.reduce((sum, obj) => sum + obj.bbox.height, 0);
@@ -83,13 +104,17 @@ dist_ver_button.onClick = function () {
             var new_top_y = layers[0].bbox.top - previous_heights - gaps_heights;
 
             //The difference between the centre y of the bbox and the y position
-            //This incorporates the pivot value
-            var bboxCentre_yPos_adjustment = layers[i].bbox.centre.y - layers[i].position.y;
+            //This incorporates the pivot
+            var bboxCentre_yPos_adjustment = -(layers[i].bbox.centre.y - layers[i].position.y);
             
             //The new y position in world space
-            var new_y_centre = new_top_y + (layers[i].bbox.height / 2);
+            var new_y_centre = new_top_y - (layers[i].bbox.height / 2);
 
             var new_y_adjusted = new_y_centre + bboxCentre_yPos_adjustment;
+
+            console.log("bboxCentre_yPos_adjustment: " + bboxCentre_yPos_adjustment);
+            console.log("new_y_centre: " + new_y_centre);
+            console.log("new_y_adjusted: " + new_y_adjusted);
 
             api.set(layers[i].id, {"position.y": new_y_adjusted});
         }
@@ -112,8 +137,10 @@ print_button.onClick = function () {
 
 // Create layout and show window
 ui.addStretch();
+ui.add(spacing_label);
 ui.add(dist_hor_button);
 ui.add(dist_ver_button);
 ui.add(print_button);
 ui.addStretch();
+ui.add(sort_hLayout);
 ui.show();
