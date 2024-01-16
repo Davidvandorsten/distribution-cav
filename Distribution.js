@@ -31,24 +31,25 @@ dist_hor_button.onClick = function () {
             })
         }
 
+        layers.sort((a, b) => a.bbox.centre.x - b.bbox.centre.x);
+
+        var start_x = layers[0].bbox.left
+        var total_width = layers[layers.length - 1].bbox.right - start_x;
+        var total_layer_width = layers.reduce((sum, obj) => sum + obj.bbox.width, 0);
+        var gap_width = (total_width - total_layer_width) / (layers.length - 1);
+
         //If the "Sort by other axis" checkbox is checked, the x pos values will be adjusted top to bottom
         //If it is not checked, the x pos values will be adjusted left to right
         if (sort_checkbox.getValue()){
-            layers.sort((a, b) => a.bbox.centre.y - b.bbox.centre.y);
-        } else {
-            layers.sort((a, b) => b.bbox.centre.x - a.bbox.centre.x);
+            layers.sort((a, b) => b.bbox.centre.y - a.bbox.centre.y);
         }
-
-        var total_width = layers[layers.length - 1].bbox.right - layers[0].bbox.left;
-        var total_layer_width = layers.reduce((sum, obj) => sum + obj.bbox.width, 0);
-        var gap_width = (total_width - total_layer_width) / (layers.length - 1);
 
         previous_widths = 0;
 
         for(let i = 1; i < layers.length - 1; i++) {
             previous_widths += layers[i - 1].bbox.width;
             var gaps_width = i * gap_width;
-            var new_left_x = layers[0].bbox.left + previous_widths + gaps_width;
+            var new_left_x = start_x + previous_widths + gaps_width;
             
             //The difference between the centre x of the bbox and the x position
             //This incorporates the pivot
@@ -84,24 +85,32 @@ dist_ver_button.onClick = function () {
             })
         }
 
-        //If the "Sort by other axis" checkbox is checked, the y pos values will be adjusted left to right
-        //If it is not checked, the y pos values will be adjusted top to bottom
-        if (sort_checkbox.getValue()){
-            layers.sort((a, b) => a.bbox.centre.x - b.bbox.centre.x);
-        } else {
-            layers.sort((a, b) => b.bbox.centre.y - a.bbox.centre.y);
-        }
+        layers.sort((a, b) => b.bbox.centre.y - a.bbox.centre.y);
 
-        var total_height = layers[0].bbox.top - layers[layers.length - 1].bbox.bottom;
+        console.log("layers[0].bbox.top: " + layers[0].bbox.top);
+        console.log("layers[layers.length - 1].bbox.bottom: " + layers[layers.length - 1].bbox.bottom);
+
+        var start_y = layers[0].bbox.top
+        var total_height = start_y - layers[layers.length - 1].bbox.bottom;
         var total_layer_height = layers.reduce((sum, obj) => sum + obj.bbox.height, 0);
         var gap_height = (total_height - total_layer_height) / (layers.length - 1);
+
+        console.log("total_height: " + total_height);
+        console.log("total_layer_height: " + total_layer_height);
+        console.log("gap_height: " + gap_height);
+
+        // //If the "Sort by other axis" checkbox is checked, the y pos values will be adjusted left to right
+        // //If it is not checked, the y pos values will be adjusted top to bottom
+        if (sort_checkbox.getValue()){
+            layers.sort((a, b) => a.bbox.centre.x - b.bbox.centre.x);
+        }
 
         previous_heights = 0;
 
         for(let i = 1; i < layers.length - 1; i++) {
             previous_heights += layers[i - 1].bbox.height;
             var gaps_heights = i * gap_height;
-            var new_top_y = layers[0].bbox.top - previous_heights - gaps_heights;
+            var new_top_y = start_y - previous_heights - gaps_heights;
 
             //The difference between the centre y of the bbox and the y position
             //This incorporates the pivot
