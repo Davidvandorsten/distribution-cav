@@ -3,7 +3,7 @@ ui.setTitle("Distribution");
 // Create buttons
 var dist_hor_button = new ui.Button("Horizontal Distribution");
 var dist_ver_button = new ui.Button("Vertical Distribution");
-var print_button = new ui.Button("Print Position Info");
+var print_button = new ui.Button("Log Position Info");
 
 // Button onClick callback functions
 dist_hor_button.onClick = function () {
@@ -32,20 +32,20 @@ dist_hor_button.onClick = function () {
         previous_widths = 0;
 
         for(let i = 1; i < layers.length - 1; i++) {
-
             previous_widths += layers[i - 1].bbox.width;
             var gaps_width = i * gap_width;
             var new_left_x = layers[0].bbox.left + previous_widths + gaps_width;
+            
+            //The difference between the centre x of the bbox and the x position
+            //This incorporates the pivot value
+            var bboxCentre_xPos_adjustment = layers[i].bbox.centre.x - layers[i].position.x;
+            
+            //The new x position in world space
+            var new_x_centre = new_left_x + (layers[i].bbox.width / 2);
 
-            var pivot = layers[i].pivot.x
-            // 0,0 is not the centre of a textShape, it's somewhere near the top left corner
-            if(api.getLayerType(layers[i].id) == "textShape"){
-                pivot = -(layers[i].bbox.left - layers[i].position.x + (layers[i].bbox.width / 2))
-            }
+            var new_x_adjusted = new_x_centre - bboxCentre_xPos_adjustment;
 
-            var new_x = new_left_x + (layers[i].bbox.width / 2) + pivot;
-
-            api.set(layers[i].id, {"position.x": new_x});
+            api.set(layers[i].id, {"position.x": new_x_adjusted});
         }
 
     } else {
@@ -69,7 +69,6 @@ dist_ver_button.onClick = function () {
                 pivot: api.get(layer, "pivot")
             })
         }
-
         layers.sort((a, b) => b.bbox.centre.y - a.bbox.centre.y);
 
         var total_height = layers[0].bbox.top - layers[layers.length - 1].bbox.bottom;
@@ -83,15 +82,16 @@ dist_ver_button.onClick = function () {
             var gaps_heights = i * gap_height;
             var new_top_y = layers[0].bbox.top - previous_heights - gaps_heights;
 
-            var pivot = layers[i].pivot.y
-            // 0,0 is not the centre of a textShape, it's somewhere near the top left corner
-            if(api.getLayerType(layers[i].id) == "textShape"){
-                pivot = -(layers[i].bbox.top - layers[i].position.y - (layers[i].bbox.height / 2))
-            }
+            //The difference between the centre y of the bbox and the y position
+            //This incorporates the pivot value
+            var bboxCentre_yPos_adjustment = layers[i].bbox.centre.y - layers[i].position.y;
+            
+            //The new y position in world space
+            var new_y_centre = new_top_y + (layers[i].bbox.height / 2);
 
-            var new_y = new_top_y - (layers[i].bbox.height / 2) + pivot;
+            var new_y_adjusted = new_y_centre + bboxCentre_yPos_adjustment;
 
-            api.set(layers[i].id, {"position.y": new_y});
+            api.set(layers[i].id, {"position.y": new_y_adjusted});
         }
 
     } else {
@@ -101,16 +101,19 @@ dist_ver_button.onClick = function () {
 
 print_button.onClick = function () {
     var sel = api.getSelection();
-    console.log("api.getBoundingBox: " + JSON.stringify(api.getBoundingBox(sel[0], true)))
-    console.log("api.get(sel[0], 'pivot'): " + JSON.stringify(api.get(sel[0], "pivot")))
-    console.log("api.get(sel[0], 'position'): " + JSON.stringify(api.get(sel[0], "position")))
+    if(sel.length == 1) {
+        console.log("api.getBoundingBox: " + JSON.stringify(api.getBoundingBox(sel[0], true)))
+        console.log("api.get(sel[0], 'pivot'): " + JSON.stringify(api.get(sel[0], "pivot")))
+        console.log("api.get(sel[0], 'position'): " + JSON.stringify(api.get(sel[0], "position")))
+    } else {
+        console.log("Exactly one layer needs to be selected");
+    }
 }
 
 // Create layout and show window
 ui.addStretch();
 ui.add(dist_hor_button);
 ui.add(dist_ver_button);
-//Debugging
-// ui.add(print_button);
+ui.add(print_button);
 ui.addStretch();
 ui.show();
